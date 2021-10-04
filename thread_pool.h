@@ -41,11 +41,10 @@ inline ThreadPool::ThreadPool(size_t pool_size) : stop(false) {
         std::function<void()> task;
         {
           std::unique_lock<std::mutex> lock(this->queue_mutex);
-          // 等待
+          // [条件变量]等待主线程设置stop或者任务队列不空
           this->condition.wait(
               lock, [this] { return this->stop || !this->tasks.empty(); });
-
-          if (this->stop && this->tasks.empty()) return;  // 停止执行，而且没有任务了
+          if (this->stop && this->tasks.empty()) return;  // 主线程设置停止执行，同时任务队列为空
           // 将队首的任务拿出来执行
           task = std::move(this->tasks.front());
           this->tasks.pop();
