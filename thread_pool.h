@@ -20,7 +20,7 @@ class ThreadPool {
   ~ThreadPool();
 
  private:
-  std::vector<std::thread> workers;         // 执行任务
+  std::vector<std::thread> workers;         // 执行任务的工作队列
   std::queue<std::function<void()>> tasks;  // 任务队列，worker所执行的函数
 
   std::mutex queue_mutex;
@@ -49,7 +49,7 @@ inline ThreadPool::ThreadPool(size_t pool_size) : stop(false) {
           task = std::move(this->tasks.front());
           this->tasks.pop();
         }
-        task();
+        task();  // 执行任务
       }
     });
 }
@@ -73,18 +73,18 @@ auto ThreadPool::enqueue(F&& f, Args&&... args)
     -> std::future<typename std::result_of<F(Args...)>::type> {
   // std::result_of<>::type是函数的返回值类型
   using return_type = typename std::result_of<F(Args...)>::type;
-  auto task = std::make_shared<std::packaged_task<return_type()>>(
+  auto task_ptr = std::make_shared<std::packaged_task<return_type()>>(
       std::bind(std::forward<F>(f), std::forward<Args>(args)...));
   // 分离返回值和函数体
-  std::future<return_type> res = task->get_future();
+  std::future<return_type> res = task_ptr->get_future();
   {
     std::unique_lock<std::mutex> lock(queue_mutex);
     if (stop) {
       throw std::runtime_error("enqueue on stopped ThreadPool");
-      // 这里*task就是std::packaged_task<return_type()>, (*task)() = f(args)，
-      // 而tasks是std::functional，封装了这段执行的代码，真正的执行是在消费者线程中
-      tasks.emplace([task]() { (*task)(); });
     }
+    // 这里*task就是std::packaged_task<return_type()>, (*task)() = f(args)，
+    // 而tasks是std::functional，封装了这段执行的代码，真正的执行是在消费者线程中
+    tasks.emplace([task_ptr]() { (*task_ptr)(); });
   }
   // 通知一个消费者线程，有新任务了
   condition.notify_one();
