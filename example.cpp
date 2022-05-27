@@ -10,6 +10,7 @@ int main() {
   std::vector<std::future<int>> results;
   // 执行8个任务
   for (int i = 0; i < 8; ++i) {
+      // 这里的enqueue输入的是函数和参数，输出的是由函数和参数构造的packaged_task的get_future();
     results.emplace_back(pool.enqueue([i] {
       std::cout << "hello" << i << std::endl;
       std::this_thread::sleep_for(std::chrono::seconds(1));
