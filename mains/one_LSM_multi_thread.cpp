@@ -11,8 +11,9 @@
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"
 
-// Open a database.
+// 既然只有一个leveldb，那不妨直接定义成全局的。
 leveldb::DB* db;
+
 
 void func(int id) {
 

@@ -37,7 +37,7 @@ class ThreadPool {
 inline ThreadPool::ThreadPool(size_t pool_size) : stop(false) {
   // 建立pool_size个线程，每个线程的任务是从任务队列中拉出一个任务并执行
   for (size_t i = 0; i < pool_size; ++i) {
-      workers.emplace_back([this] {
+      workers.emplace_back([i, this] {
           // 下面的 while (true) 后面的整段代码应该是作为一个thread初始化的函数，立即被执行的。
           while (true) {
               std::function<void()> task;
@@ -45,23 +45,28 @@ inline ThreadPool::ThreadPool(size_t pool_size) : stop(false) {
                   std::unique_lock<std::mutex> lock(this->queue_mutex);
                   // template <class Predicate>，void wait (unique_lock<mutex>& lck, Predicate pred) = while(!pred()) wait(lck);
                   // 没拿到队列锁lck、并且pred为false时才阻塞；收到其他线程通知后（从wait走出来，拿到锁lck了），再次检查只有当pred为true时才解除阻塞。
+                  // 这里是一个lambda函数，捕获this，拿到其成员属性stop和task的是否非空状态。
                   this->condition.wait(lock, [this] { return this->stop || !this->tasks.empty(); });
                   // pred为true: 拿到stop信号或者队列非空; pred为false: 没拿到stop信号、并且队列为空。
                   // 后者意味着：没拿到stop信号的大前提下：刚初始化线程池，故线程队列为空; 或者线程队列中的任务全被做完了，故线程队列变空。两种情况都会阻塞。
 
                   // 没有被阻塞的情况，代码走到这里。要么拿到了stop信号，要么队列不空。分为如下三种情况：
                   // 1. 拿到stop信号、队列为空：停止while，也即这个线程不再是永生（while (true)）的了，要结束了。
-                  if (this->stop && this->tasks.empty()) return;  // 主线程设置停止执行，同时任务队列为空
+                  if (this->stop && this->tasks.empty()) return;
+//                  {  // 主线程设置停止执行，同时任务队列为空
+//                      std::cout << "主线程设置停止执行，同时任务队列为空，线程池即将返回" << std::endl;
+//                      return;
+//                  }
                   // 2. 3. 任务队列不空：那就把队列中的任务执行完：将队首任务拿出来执行。
                   task = std::move(this->tasks.front());
                   this->tasks.pop();
               }
               // 选出task之后，队列就不用被保护了。所以可以先交出队列锁，再执行任务。否则，就只剩线程安全，没有并发了。
+              std::cout << "thread " << i << " is working" << std::endl;
               task();
               // 每完成一个任务，这个地方就通过一次。也即完成了多少个任务，task()执行多少次，这里就通过多少次。
           }
       });
-      std::cerr << "line 61" << std::endl;
       // 这个位置在任何任务被加进队列前(初始化线程池的时候，并没有办法同时或在此之前把任务加进去)，通过了pool_size次，并且只运行pool_size次。
   }
 }
