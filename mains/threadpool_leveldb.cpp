@@ -68,7 +68,7 @@ int main() {
     leveldb::Options opts;
     opts.create_if_missing = true;
     leveldb::Status status;
-    std::string db_location("./testdb0");
+    std::string db_location("./db_dir/testdb0");
     status = leveldb::DB::Open(opts, db_location, &db0);
     assert(status.ok());
 
