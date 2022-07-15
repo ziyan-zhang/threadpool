@@ -37,3 +37,4 @@ build
 # idea directory
 .idea
 cmake-build-debug
+testdb*
