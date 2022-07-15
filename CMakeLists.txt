@@ -2,11 +2,13 @@ cmake_minimum_required(VERSION 3.16)
 project(threadpool)
 
 set(CMAKE_CXX_STANDARD 14)
-set(EXECUTABLE_OUTPUT_PATH "build")
 
 include_directories(.)
 LINK_LIBRARIES(/usr/local/lib/libleveldb.a)
 LINK_LIBRARIES(/usr/local/lib/libsnappy.a)
+
+# 包含指定目录下的头文件
+include_directories("include")
 
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-pthread")
 
