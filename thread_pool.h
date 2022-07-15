@@ -62,7 +62,7 @@ inline ThreadPool::ThreadPool(size_t pool_size) : stop(false) {
                   this->tasks.pop();
               }
               // 选出task之后，队列就不用被保护了。所以可以先交出队列锁，再执行任务。否则，就只剩线程安全，没有并发了。
-              std::cout << "thread " << i << " is working" << std::endl;
+//              std::cout << "thread " << i << " is working" << std::endl;
               task();
               // 每完成一个任务，这个地方就通过一次。也即完成了多少个任务，task()执行多少次，这里就通过多少次。
           }
