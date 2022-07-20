@@ -21,5 +21,5 @@ file(GLOB mains
 foreach(mainfile IN LISTS mains)
     # Get file name without directory
     get_filename_component(mainname ${mainfile} NAME_WE)
-    add_executable(${mainname} ${mainfile})
+    add_executable(${mainname} ${mainfile} include/timer.h include/stats.h)
 endforeach()
