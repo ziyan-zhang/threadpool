@@ -38,3 +38,6 @@ build
 .idea
 cmake-build-debug
 testdb*
+
+# files
+out.txt
